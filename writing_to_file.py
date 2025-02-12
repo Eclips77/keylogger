@@ -15,7 +15,7 @@ class FileWriter(IWriter):
         The data is then saved into a JSON file with proper formatting.
         """
 
-        now = datetime.now().strftime("%Y-%m-%d %H:%M")
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if os.path.exists(machine_name):
             try:
