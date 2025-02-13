@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-import os
 from iwriter import IWriter
 
 
@@ -8,24 +7,51 @@ class FileWriter(IWriter):
 
     def send_data(self,data: str, machine_name: str) -> None:
         """
-        This function receives a string of data and a file name (machine_name).
-        It takes the current time and stores it as a key in a dictionary,
-        where the value is the received data.
-        If the file exists, it loads the existing data; otherwise, it creates a new dictionary.
-        The data is then saved into a JSON file with proper formatting.
+        The function calls receiving_data which returns
+        the information already present in the file.
+        adds the new information to it. and sends to
+        the writer_to_file function that inserts the
+        updated data into the file.
         """
 
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        receiving_data = self.receiving_data(machine_name)
+        receiving_data[self.current_tine()] = data
+        self.writer_to_file(receiving_data,machine_name)
 
-        if os.path.exists(machine_name):
-            try:
-                with open(machine_name, "r+") as f:
-                    all_data = json.load(f)
-            except json.JSONDecodeError:
-                all_data = {}
-        else:
-            all_data = {}
-        all_data[now] = data
+    @staticmethod
+    def receiving_data(machine_name:str) -> dict:
+
+        """
+        The function returns the information
+        that already exists in the file
+        """
+
+        try:
+            with open(machine_name,"r") as f:
+                receiving_data = json.load(f)
+                if not isinstance(receiving_data,dict):
+                    return {}
+            return receiving_data
+        except (json.JSONDecodeError, FileNotFoundError, OSError):
+            return {}
+
+    @staticmethod
+    def writer_to_file(data: dict,machine_name: str) -> None:
+
+        """
+        The function writes to a json file
+        """
+
         with open(machine_name, "w") as f:
-            json.dump(all_data, f, indent=4)
+            json.dump(data, f)
+
+    @staticmethod
+    def current_tine():
+        """
+        The function returns a string
+        containing the current time
+        :return:
+        """
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
