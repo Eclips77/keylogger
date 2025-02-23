@@ -1,5 +1,5 @@
 from Encryption import Encryption
-from config import SECRET_KEY
+from attack_software.config.config import SECRET_KEY
 
 class XOREncryption(Encryption):
     """
