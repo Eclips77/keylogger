@@ -15,6 +15,8 @@ const detailIp = document.getElementById('detail-ip');
 const keylogData = document.getElementById('keylog-data');
 const systemInfo = document.getElementById('system-info');
 const searchInput = document.getElementById('search-input');
+const startLogging = document.getElementById('start-logging');
+const stopLogging = document.getElementById('stop-logging');
 
 // Modal: Send Command
 const controlComputerBtn = document.getElementById('control-computer-btn');
@@ -56,7 +58,17 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchComputers();
   setupEventListeners();
   initDashboardChart();
+  printToConsole();
 });
+
+function printToConsole() {
+  startLogging.addEventListener('click', () => {
+    console.log('startLogging');
+  });
+  stopLogging.addEventListener('click', () => {
+    console.log('stopLogging');
+  })
+}
 
 // Navigation
 function initNavLinks() {
