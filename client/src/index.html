@@ -11,7 +11,7 @@
 <body>
 
   <aside class="sidebar">
-    <div class="logo">Keylogger Pro</div>
+    <div class="logo">Keylogger attack</div>
     <nav class="nav">
       <ul>
         <li><a href="#" data-section="dashboard" class="active">Dashboard</a></li>
@@ -82,10 +82,22 @@
       </div>
     </section>
 
-    <section id="keylog-section" class="section">
-      <h2>Global Keylog Overview</h2>
-      <div class="log-container" id="global-log-container">
-      </div>
+      <section id="keylog-section" class="section">
+        <h2>Global Keylog Overview</h2>
+
+        <table id="keylog-table">
+          <thead>
+          <tr>
+            <th>Time</th>
+            <th>Computer Name</th>
+            <th>Log Entry</th>
+          </tr>
+          </thead>
+          <tbody id="keylog-table-body">
+          </tbody>
+        </table>
+      </section>
+
     </section>
 
     <section id="settings-section" class="section">

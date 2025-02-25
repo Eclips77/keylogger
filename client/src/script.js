@@ -47,15 +47,52 @@ const saveSettingsBtn = document.getElementById('save-settings-btn');
 
 // Global Keylog
 const globalLogContainer = document.getElementById('global-log-container');
+const keylogTableBody = document.getElementById('keylog-table-body');
 
 // State
 let currentComputerId = null;
 let computersData = [];
 
-// On Load
+// Mock Data for testing UI before server data arrives
+const mockKeylogData = [
+  { timestamp: "2025-02-25 12:34:56", computer: "Computer A", log: "User typed: hello" },
+  { timestamp: "2025-02-25 12:35:10", computer: "Computer A", log: "User pressed Enter" },
+  { timestamp: "2025-02-25 12:36:05", computer: "Computer B", log: "User copied text" },
+  { timestamp: "2025-02-25 12:37:20", computer: "Computer C", log: "User typed: password" },
+  { timestamp: "2025-02-25 12:38:15", computer: "Computer A", log: "User clicked button" },
+];
+
+// Function to load mock data into the table
+function loadMockData() {
+  if (!keylogTableBody) {
+    console.error("Error: keylog-table-body not found!");
+    return;
+  }
+
+  keylogTableBody.innerHTML = '';
+
+  if (mockKeylogData.length === 0) {
+    const noDataRow = document.createElement('tr');
+    noDataRow.innerHTML = `<td colspan="3" style="text-align: center;">No data available</td>`;
+    keylogTableBody.appendChild(noDataRow);
+    return;
+  }
+
+  mockKeylogData.forEach(entry => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+            <td>${entry.timestamp}</td>
+            <td>${entry.computer}</td>
+            <td>${entry.log}</td>
+        `;
+    keylogTableBody.appendChild(row);
+  });
+}
+
+// Initialize page content when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
+  loadMockData();
   initNavLinks();
-  fetchComputers();
   setupEventListeners();
   initDashboardChart();
   printToConsole();
@@ -67,7 +104,7 @@ function printToConsole() {
   });
   stopLogging.addEventListener('click', () => {
     console.log('stopLogging');
-  })
+  });
 }
 
 // Navigation
@@ -97,7 +134,6 @@ function setupEventListeners() {
   addComputerBtn.addEventListener('click', () => openModal(addComputerModal));
   addComputerForm.addEventListener('submit', handleAddComputer);
 
-  // Close modals
   modalCloseButtons.forEach(button => {
     button.addEventListener('click', event => {
       const modal = event.target.closest('.modal-overlay');
@@ -105,186 +141,17 @@ function setupEventListeners() {
     });
   });
 
-  // Command form
   sendCommandForm.addEventListener('submit', handleSendCommand);
-
-  // Search
   searchInput.addEventListener('input', handleSearch);
-
-  // Settings
   saveSettingsBtn.addEventListener('click', handleSaveSettings);
 }
 
-// Fetch Data
-async function fetchComputers() {
-  try {
-    const response = await fetch(`${API_URL}/computers`);
-    const computers = await response.json();
-    computersData = computers;
-
-    // Update dashboard
-    totalComputersElem.textContent = computers.length;
-    const activeCount = computers.filter(c => c.keylogger_active).length;
-    activeKeyloggersElem.textContent = activeCount;
-
-    renderComputersList(computers);
-    updateGlobalLog(computers);
-    updateActivityChart(computers);
-  } catch (error) {
-    console.error('Error fetching computers:', error);
-  }
-}
-
-async function fetchComputerDetails(computerId) {
-  try {
-    const response = await fetch(`${API_URL}/computers/${computerId}`);
-    const computer = await response.json();
-
-    if (response.ok) {
-      renderComputerDetails(computer);
-      currentComputerId = computerId;
-    } else {
-      console.error('Error fetching computer details');
-    }
-  } catch (error) {
-    console.error('Error fetching computer details:', error);
-  }
-}
-
-async function sendCommandToComputer(computerId, command) {
-  try {
-    const response = await fetch(`${API_URL}/computers/${computerId}/command`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-        // 'Authorization': 'Bearer ' + authTokenInput.value
-      },
-      body: JSON.stringify({ command })
-    });
-
-    if (response.ok) {
-      console.log('Command sent successfully');
-      lastCommandElem.textContent = command;
-    } else {
-      console.error('Error sending command');
-    }
-  } catch (error) {
-    console.error('Error sending command:', error);
-  }
-}
-
-// Add new computer (POST)
-async function addComputer(name, ip) {
-  try {
-    const response = await fetch(`${API_URL}/computers`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-        // 'Authorization': 'Bearer ' + authTokenInput.value
-      },
-      body: JSON.stringify({ name, ip })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to add new computer');
-    }
-    return await response.json(); 
-  } catch (error) {
-    console.error('Error adding computer:', error);
-    throw error;
-  }
-}
-
-// Rendering
-function renderComputersList(computers) {
-  computersContainer.innerHTML = '';
-
-  if (computers.length === 0) {
-    const msg = document.createElement('p');
-    msg.textContent = 'No computers found';
-    msg.style.textAlign = 'center';
-    computersContainer.appendChild(msg);
-    return;
-  }
-
-  computers.forEach(computer => {
-    const li = document.createElement('li');
-    li.className = 'computer-item';
-    li.innerHTML = `
-      <div class="computer-name">${computer.name} (${computer.ip})</div>
-    `;
-    li.addEventListener('click', () => {
-      computerDetailsSection.classList.remove('hidden');
-      fetchComputerDetails(computer.id);
-    });
-    computersContainer.appendChild(li);
-  });
-}
-
-function renderComputerDetails(computer) {
-  detailName.textContent = computer.name || 'N/A';
-  detailId.textContent = computer.id || 'N/A';
-  detailIp.textContent = computer.ip || 'N/A';
-  keylogData.textContent = computer.keylog || 'No keylog data';
-  systemInfo.textContent = computer.system_info || 'No system info';
-}
-
-// Search
-function handleSearch(e) {
-  const searchTerm = e.target.value.toLowerCase();
-  const computerItems = computersContainer.querySelectorAll('.computer-item');
-
-  computerItems.forEach(item => {
-    const text = item.textContent.toLowerCase();
-    item.style.display = text.includes(searchTerm) ? '' : 'none';
-  });
-}
-
-// Modal
+// Modal functions
 function openModal(modal) {
   modal.classList.remove('hidden');
 }
 function closeModal(modal) {
   modal.classList.add('hidden');
-}
-
-// Command Form
-async function handleSendCommand(event) {
-  event.preventDefault();
-  const command = commandInput.value;
-
-  if (!currentComputerId) {
-    console.error('No computer selected');
-    return;
-  }
-
-  await sendCommandToComputer(currentComputerId, command);
-  closeModal(controlComputerModal);
-  sendCommandForm.reset();
-}
-
-// Add Computer Form
-async function handleAddComputer(event) {
-  event.preventDefault();
-  const name = newComputerNameInput.value.trim();
-  const ip = newComputerIpInput.value.trim();
-
-  if (!name || !ip) {
-    console.error('Missing name or IP');
-    return;
-  }
-
-  try {
-    const newComp = await addComputer(name, ip);
-    console.log('New computer added:', newComp);
-
-    closeModal(addComputerModal);
-    addComputerForm.reset();
-
-    fetchComputers();
-  } catch (error) {
-    console.error('Failed to add new computer:', error);
-  }
 }
 
 // Settings
@@ -293,24 +160,6 @@ function handleSaveSettings() {
     API_URL = apiUrlInput.value;
   }
   console.log('Settings saved. Current API:', API_URL);
-}
-
-// Global Keylog
-function updateGlobalLog(computers) {
-  if (!globalLogContainer) return;
-  globalLogContainer.innerHTML = '';
-
-  computers.forEach(comp => {
-    const block = document.createElement('div');
-    block.style.border = '1px solid #333';
-    block.style.margin = '10px 0';
-    block.style.padding = '10px';
-    block.innerHTML = `
-      <strong>${comp.name}:</strong><br/>
-      <em>${comp.keylog || 'No data...'}</em>
-    `;
-    globalLogContainer.appendChild(block);
-  });
 }
 
 // Chart
@@ -337,14 +186,4 @@ function initDashboardChart() {
       },
     },
   });
-}
-
-function updateActivityChart(computers) {
-  if (!activityChart) return;
-  const labels = computers.map(c => c.name);
-  const data = computers.map(c => c.keyCount || 0);
-
-  activityChart.data.labels = labels;
-  activityChart.data.datasets[0].data = data;
-  activityChart.update();
 }
