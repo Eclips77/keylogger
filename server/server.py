@@ -1,4 +1,5 @@
 import os
+import ast
 import json
 import logging
 from flask_cors import CORS
@@ -60,26 +61,27 @@ def store_new_data():
     logging.info("Processing new data for storage.")
 
     # Get raw data from the request body and decrypt it
-    data = request.data.decode('utf-8')
+    data = json.loads(request.data.decode('utf-8'))
     logging.debug(f"Decrypted data: {data}")
+    data['data'] = decrypt_data(data['data'])
+    data = ast.literal_eval(data['data'])
 
-    data = decrypt_data(data)
     if not data:
         return jsonify({"error": "Decryption failed. Invalid data format."}), 400
 
-    try:
-        new_data = json.loads(data)
-    except json.JSONDecodeError as e:
-        logging.error(f"Invalid JSON format: {e}")
-        return jsonify({"error": "Invalid JSON format."}), 400
+    # try:
+    #     new_data = json.loads(data)
+    # except json.JSONDecodeError as e:
+    #     logging.error(f"Invalid JSON format: {e}")
+    #     return jsonify({"error": "Invalid JSON format."}), 400
 
-    if not isinstance(new_data, dict):
+    if not isinstance(data, dict):
         logging.error("Invalid data received, expected a JSON object.")
         return jsonify({"error": "Invalid data format. Expected a JSON object."}), 400
 
     # Load existing data, append new data and save it
     old_data = load_existing_data()
-    data = append_to_data_list(old_data, new_data)
+    data = append_to_data_list(old_data, data)
     save_data_to_file(data)
 
     logging.info("New data saved successfully.")

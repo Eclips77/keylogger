@@ -62,7 +62,7 @@ async function loadMockData() {
     return;
   }
   keylogTableBody.innerHTML = '';
-  const keylogEntries = mockKeylogData.data || [];  // גישה למערך בתוך המפתח data
+  const keylogEntries = mockKeylogData.data || [];
   if (keylogEntries.length === 0) {
     const noDataRow = document.createElement('tr');
     noDataRow.innerHTML = `<td colspan="3" style="text-align: center;">No data available</td>`;
@@ -73,8 +73,8 @@ async function loadMockData() {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${entry.timestamp}</td>
-      <td>${entry.computer}</td>
-      <td>${entry.log}</td>
+      <td>${entry.computer_name}</td>
+      <td>${entry.data}</td>
     `;
     keylogTableBody.appendChild(row);
   });
