@@ -2,12 +2,10 @@ import os
 import json
 import logging
 from flask import Flask, request, jsonify
-from flask_socketio import SocketIO, emit
 from config.config_server import NAME_FILE
 from xor_encryption import XOREncryption
 
 app = Flask(__name__)
-socketio = SocketIO(app)
 
 name_log = "logs"
 
@@ -55,14 +53,20 @@ def store_new_data():
 
     # Get raw data from the request body and decrypt it
     data = request.data.decode('utf-8')
-    new_data = decrypt_data(data)
-    logging.debug(f"Decrypted data: {new_data}")
+    logging.debug(f"Decrypted data: {data}")
 
-    data = decrypt_data(new_data)
-    new_data = json.loads(data)
+    data = decrypt_data(data)
+    if not data:
+        return jsonify({"error": "Decryption failed. Invalid data format."}), 400
+
+    try:
+        new_data = json.loads(data)
+    except json.JSONDecodeError as e:
+        logging.error(f"Invalid JSON format: {e}")
+        return jsonify({"error": "Invalid JSON format."}), 400
 
     if not isinstance(new_data, dict):
-        logging.error("Invalid data received")
+        logging.error("Invalid data received, expected a JSON object.")
         return jsonify({"error": "Invalid data format. Expected a JSON object."}), 400
 
     # Load existing data, append new data and save it
@@ -71,7 +75,7 @@ def store_new_data():
     save_data_to_file(data)
 
     logging.info("New data saved successfully.")
-    return jsonify({"message": "Data saved successfully"}), 200
+    return jsonify({"message": "Data saved successfully"}), 201
 
 
 def decrypt_data(data) -> str:
@@ -117,7 +121,7 @@ def load_existing_data() -> list:
             return data if isinstance(data, list) else []
     except (json.JSONDecodeError, IOError) as e:
         logging.error(f"Failed to load JSON file: {e}")
-        return []
+        return jsonify({"error": f"Failed to load data: {str(e)}"}), 500
 
 
 def save_data_to_file(data_list) -> None:
@@ -140,6 +144,7 @@ def save_data_to_file(data_list) -> None:
 
     except IOError as e:
         logging.error(f"Failed to write data to file: {e}")
+        return jsonify({"error": f"Failed to write data: {str(e)}"}), 500
 
 
 @app.route('/', methods=['GET'])
@@ -155,13 +160,13 @@ def get_data():
 
     if not data:
         logging.error("No data available in the file.")
-        return jsonify({"error": "No data available"}), 404
+        return jsonify({"error": "No data found in the system. Please add data first."}), 404
 
     logging.info("Returning stored data.")
     return jsonify({"data": data}), 200
 
 
-@app.route('/toggle_recording', methods=['POST'])
+@app.route('/toggle_recording', methods=['GET'])
 def toggle_recording():
     """
     Toggles the recording status and emits the updated status to clients.
@@ -171,18 +176,8 @@ def toggle_recording():
     logging.info(f"Recording status changed to: {is_recording_active}")
 
     # Emit the new status to all connected clients
-    socketio.emit('update_recording_status', {'recording': is_recording_active})
+    return jsonify({"recording": is_recording_active, "message": "Recording status updated successfully."}), 200
 
-    return jsonify({"recording": is_recording_active})
-
-
-@socketio.on('connect')
-def handle_connect():
-    """
-    Handles a new client connection to the WebSocket server.
-    """
-    logging.info("New client connected.")
-    return "Client connected"
 
 
 if __name__ == '__main__':
