@@ -1,12 +1,13 @@
 import os
 import json
 import logging
+from flask_cors import CORS
 from flask import Flask, request, jsonify
 from config.config_server import NAME_FILE
 from xor_encryption import XOREncryption
 
 app = Flask(__name__)
-
+CORS(app)
 name_log = "logs"
 
 if not os.path.exists(name_log):
