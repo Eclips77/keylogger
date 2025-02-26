@@ -53,28 +53,23 @@ let currentComputerId = null;
 let computersData = JSON.parse(localStorage.getItem('computersData')) || [];
 
 // Mock Data for testing UI
-const mockKeylogData = [
-  { timestamp: "2025-02-25 12:34:56", computer: "Computer A", log: "User typed: hello" },
-  { timestamp: "2025-02-25 12:35:10", computer: "Computer A", log: "User pressed Enter" },
-  { timestamp: "2025-02-25 12:36:05", computer: "Computer B", log: "User copied text" },
-  { timestamp: "2025-02-25 12:37:20", computer: "Computer C", log: "User typed: password" },
-  { timestamp: "2025-02-25 12:38:15", computer: "Computer A", log: "User clicked button" },
-];
-
 // Load mock data into table
-function loadMockData() {
+// Load mock data into table
+async function loadMockData() {
+  const mockKeylogData = await getData();  // לחכות לתוצאה מה-API
   if (!keylogTableBody) {
     console.error("Error: keylog-table-body not found!");
     return;
   }
   keylogTableBody.innerHTML = '';
-  if (mockKeylogData.length === 0) {
+  const keylogEntries = mockKeylogData.data || [];  // גישה למערך בתוך המפתח data
+  if (keylogEntries.length === 0) {
     const noDataRow = document.createElement('tr');
     noDataRow.innerHTML = `<td colspan="3" style="text-align: center;">No data available</td>`;
     keylogTableBody.appendChild(noDataRow);
     return;
   }
-  mockKeylogData.forEach(entry => {
+  keylogEntries.forEach(entry => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${entry.timestamp}</td>
@@ -84,6 +79,8 @@ function loadMockData() {
     keylogTableBody.appendChild(row);
   });
 }
+
+
 
 // Filter table based on search input
 function handleSearch() {
@@ -269,3 +266,15 @@ function initDashboardChart() {
     },
   });
 }
+
+async function getData() {
+  try {
+    let response = await fetch('http://127.0.0.1:5000/');
+    let data = await response.json();
+    console.log(data);
+    return data
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+let data = getData()
