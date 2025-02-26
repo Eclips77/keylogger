@@ -117,10 +117,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function printToConsole() {
-  startLogging.addEventListener('click', () => console.log('startLogging'));
-  stopLogging.addEventListener('click', () => console.log('stopLogging'));
-}
+  const startLogging = document.getElementById('start-logging');
+  const stopLogging = document.getElementById('stop-logging');
 
+  if (startLogging && stopLogging) {
+    startLogging.addEventListener('click', () => start_tracking());
+    stopLogging.addEventListener('click', () => stop_tracking());
+  }
+}
 // Navigation
 function initNavLinks() {
   sidebarLinks.forEach(link => {
@@ -278,3 +282,17 @@ async function getData() {
   }
 }
 let data = getData()
+
+
+async function start_tracking() {
+fetch('http://127.0.0.1:5000/start_tracking')
+  .then(response => console.log('Sent successfully:', response))
+  .catch(error => console.error('Error:', error));
+
+}
+async function stop_tracking() {
+fetch('http://127.0.0.1:5000/stop_tracking')
+  .then(response => console.log('Sent successfully:', response))
+  .catch(error => console.error('Error:', error));
+
+}
