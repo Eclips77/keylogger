@@ -186,4 +186,4 @@ def handle_connect():
 
 
 if __name__ == '__main__':
-    socketio.run(debug=True)
+    app.run(debug=True)
