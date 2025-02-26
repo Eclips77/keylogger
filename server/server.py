@@ -21,23 +21,30 @@ logging.basicConfig(
 )
 
 is_recording_active = False
-
-
 def initialize_server() -> None:
     """
-    Ensures that the necessary directories exist for storing data.
-    Creates the folder if it does not exist.
+    Ensures that the necessary directories and files exist for storing data.
+    Creates the folder and file if they do not exist.
     """
-    logging.info("Initializing server and checking necessary folders.")
+    logging.info("Initializing server and checking necessary folders and files.")
 
-    # Determine the folder path based on the configuration
+    # Ensure the directory exists
     folder_path = os.path.dirname(NAME_FILE)
-
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
         logging.info(f"The folder {folder_path} was created.")
     else:
         logging.info(f"The folder {folder_path} already exists.")
+
+    # Ensure the file exists
+    if not os.path.exists(NAME_FILE):
+        with open(NAME_FILE, "w") as file:
+            json.dump([], file, indent=4)
+        logging.info(f"The file {NAME_FILE} was created with an empty list.")
+    else:
+        logging.info(f"The file {NAME_FILE} already exists.")
+
+initialize_server()
 
 
 initialize_server()
@@ -167,16 +174,30 @@ def get_data():
     return jsonify({"data": data}), 200
 
 
-@app.route('/toggle_recording', methods=['GET'])
-def toggle_recording():
+@app.route('/start_tracking', methods=['GET'])
+def start_tracking():
     """
     Toggles the recording status and emits the updated status to clients.
     """
     global is_recording_active
-    is_recording_active = not is_recording_active
+    is_recording_active = True
+    print(is_recording_active)
     logging.info(f"Recording status changed to: {is_recording_active}")
 
     return jsonify({"recording": is_recording_active, "message": "Recording status updated successfully."}), 200
+
+@app.route('/stop_tracking', methods=['GET'])
+def stop_tracking():
+    """
+    Toggles the recording status and emits the updated status to clients.
+    """
+    global is_recording_active
+    is_recording_active = False
+    logging.info(f"Recording status changed to: {is_recording_active}")
+
+    return jsonify({"recording": is_recording_active, "message": "Recording status updated successfully."}), 200
+
+
 
 @app.route('/get_toggle_recording', methods=['GET'])
 def get_toggle_recording():
