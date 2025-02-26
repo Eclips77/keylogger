@@ -21,6 +21,7 @@ logging.basicConfig(
     filemode="a"
 )
 
+
 is_recording_active = False
 
 
@@ -55,10 +56,9 @@ def store_new_data():
 
     # Get raw data from the request body and decrypt it
     data = request.data.decode('utf-8')
-    new_data = decrypt_data(data)
-    logging.debug(f"Decrypted data: {new_data}")
+    logging.debug(f"Decrypted data: {data}")
 
-    data = decrypt_data(new_data)
+    data = decrypt_data(data)
     new_data = json.loads(data)
 
     if not isinstance(new_data, dict):
@@ -186,4 +186,4 @@ def handle_connect():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app,debug=True, allow_unsafe_werkzeug=True)
