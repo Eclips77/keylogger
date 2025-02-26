@@ -46,14 +46,13 @@ const authTokenInput = document.getElementById('auth-token');
 const saveSettingsBtn = document.getElementById('save-settings-btn');
 
 // Global Keylog
-const globalLogContainer = document.getElementById('global-log-container');
 const keylogTableBody = document.getElementById('keylog-table-body');
 
 // State
 let currentComputerId = null;
-let computersData = [];
+let computersData = JSON.parse(localStorage.getItem('computersData')) || [];
 
-// Mock Data for testing UI before server data arrives
+// Mock Data for testing UI
 const mockKeylogData = [
   { timestamp: "2025-02-25 12:34:56", computer: "Computer A", log: "User typed: hello" },
   { timestamp: "2025-02-25 12:35:10", computer: "Computer A", log: "User pressed Enter" },
@@ -62,36 +61,58 @@ const mockKeylogData = [
   { timestamp: "2025-02-25 12:38:15", computer: "Computer A", log: "User clicked button" },
 ];
 
-// Function to load mock data into the table
+// Load mock data into table
 function loadMockData() {
   if (!keylogTableBody) {
     console.error("Error: keylog-table-body not found!");
     return;
   }
-
   keylogTableBody.innerHTML = '';
-
   if (mockKeylogData.length === 0) {
     const noDataRow = document.createElement('tr');
     noDataRow.innerHTML = `<td colspan="3" style="text-align: center;">No data available</td>`;
     keylogTableBody.appendChild(noDataRow);
     return;
   }
-
   mockKeylogData.forEach(entry => {
     const row = document.createElement('tr');
     row.innerHTML = `
-            <td>${entry.timestamp}</td>
-            <td>${entry.computer}</td>
-            <td>${entry.log}</td>
-        `;
+      <td>${entry.timestamp}</td>
+      <td>${entry.computer}</td>
+      <td>${entry.log}</td>
+    `;
     keylogTableBody.appendChild(row);
   });
 }
 
-// Initialize page content when DOM is fully loaded
+// Filter table based on search input
+function handleSearch() {
+  const searchTerm = searchInput.value.toLowerCase();
+  keylogTableBody.innerHTML = '';
+  const filteredData = mockKeylogData.filter(entry =>
+      entry.computer.toLowerCase().includes(searchTerm)
+  );
+  if (filteredData.length === 0) {
+    const noDataRow = document.createElement('tr');
+    noDataRow.innerHTML = `<td colspan="3" style="text-align: center;">No matching data</td>`;
+    keylogTableBody.appendChild(noDataRow);
+  } else {
+    filteredData.forEach(entry => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${entry.timestamp}</td>
+        <td>${entry.computer}</td>
+        <td>${entry.log}</td>
+      `;
+      keylogTableBody.appendChild(row);
+    });
+  }
+}
+
+// Initialize page content
 document.addEventListener('DOMContentLoaded', () => {
   loadMockData();
+  updateComputersList();
   initNavLinks();
   setupEventListeners();
   initDashboardChart();
@@ -99,12 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function printToConsole() {
-  startLogging.addEventListener('click', () => {
-    console.log('startLogging');
-  });
-  stopLogging.addEventListener('click', () => {
-    console.log('stopLogging');
-  });
+  startLogging.addEventListener('click', () => console.log('startLogging'));
+  stopLogging.addEventListener('click', () => console.log('stopLogging'));
 }
 
 // Navigation
@@ -113,24 +130,21 @@ function initNavLinks() {
     link.addEventListener('click', event => {
       event.preventDefault();
       const sectionToShow = link.getAttribute('data-section');
-
       sections.forEach(s => s.classList.remove('active'));
       sidebarLinks.forEach(l => l.classList.remove('active'));
-
       document.getElementById(`${sectionToShow}-section`).classList.add('active');
       link.classList.add('active');
     });
   });
 }
 
-// Events
+// Event Listeners
 function setupEventListeners() {
   closeDetailsBtn.addEventListener('click', () => {
     computerDetailsSection.classList.add('hidden');
   });
 
   controlComputerBtn.addEventListener('click', () => openModal(controlComputerModal));
-
   addComputerBtn.addEventListener('click', () => openModal(addComputerModal));
   addComputerForm.addEventListener('submit', handleAddComputer);
 
@@ -146,12 +160,83 @@ function setupEventListeners() {
   saveSettingsBtn.addEventListener('click', handleSaveSettings);
 }
 
-// Modal functions
+// Modal Functions
 function openModal(modal) {
   modal.classList.remove('hidden');
 }
 function closeModal(modal) {
   modal.classList.add('hidden');
+}
+
+// Add Computer
+function handleAddComputer(event) {
+  event.preventDefault();
+  const name = newComputerNameInput.value.trim();
+  const ip = newComputerIpInput.value.trim();
+  const ipRegex = /^(25[0-5]|2[0-4]\d|[01]?\d\d?)(\.(25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/;
+
+  if (!name || !ip) {
+    alert('Please fill in all fields.');
+    return;
+  }
+  if (!ipRegex.test(ip)) {
+    alert('Invalid IP address format.');
+    return;
+  }
+
+  const newComputer = {
+    id: Date.now().toString(),
+    name: name,
+    ip: ip
+  };
+  computersData.push(newComputer);
+  localStorage.setItem('computersData', JSON.stringify(computersData));
+  updateComputersList();
+  totalComputersElem.textContent = computersData.length;
+  addComputerForm.reset();
+  closeModal(addComputerModal);
+}
+
+// Update Computers List with Remove Functionality
+function updateComputersList() {
+  computersContainer.innerHTML = '';
+  computersData.forEach((computer, index) => {
+    const li = document.createElement('li');
+    li.className = 'computer-item';
+    li.innerHTML = `
+      <span>${computer.name}</span>
+      <button class="remove-computer-btn" data-index="${index}">Remove</button>
+    `;
+    li.querySelector('span').addEventListener('click', () => {
+      currentComputerId = computer.id;
+      detailName.textContent = computer.name;
+      detailId.textContent = computer.id;
+      detailIp.textContent = computer.ip;
+      systemInfo.textContent = 'System info not available.';
+      keylogData.textContent = 'Keylog data not available.';
+      computerDetailsSection.classList.remove('hidden');
+    });
+    li.querySelector('.remove-computer-btn').addEventListener('click', () => {
+      computersData.splice(index, 1);
+      localStorage.setItem('computersData', JSON.stringify(computersData));
+      updateComputersList();
+      totalComputersElem.textContent = computersData.length;
+    });
+    computersContainer.appendChild(li);
+  });
+  totalComputersElem.textContent = computersData.length;
+}
+
+// Send Command
+function handleSendCommand(event) {
+  event.preventDefault();
+  const command = commandInput.value.trim();
+  if (command && currentComputerId) {
+    console.log(`Sending command "${command}" to computer ${currentComputerId}`);
+    lastCommandElem.textContent = command;
+    sendCommandForm.reset();
+    closeModal(controlComputerModal);
+  }
 }
 
 // Settings
@@ -166,18 +251,15 @@ function handleSaveSettings() {
 function initDashboardChart() {
   const ctx = document.getElementById('activityChart');
   if (!ctx) return;
-
   activityChart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: [],
-      datasets: [
-        {
-          label: 'Keylogger Activity',
-          data: [],
-          backgroundColor: '#ff1744',
-        },
-      ],
+      datasets: [{
+        label: 'Keylogger Activity',
+        data: [],
+        backgroundColor: '#ff1744',
+      }],
     },
     options: {
       responsive: true,
